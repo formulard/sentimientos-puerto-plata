@@ -1,0 +1,12 @@
+.Rproj.user/
+.Renviron
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+.Rapp.history
+.DS_Store
+*.utf8.md
+*.knit.md
+renv/library/
+renv/staging/
