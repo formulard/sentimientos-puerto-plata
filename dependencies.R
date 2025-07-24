@@ -1,7 +1,7 @@
 library(googleway)
 library(stringr)
 library(dplyr)
-library(httr)
+library(httr2)
 library(tidyr)
 library(box)
 library(purrr)
