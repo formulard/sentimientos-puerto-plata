@@ -108,9 +108,11 @@ if (length(reviews) < length(urls)) {
   }
 }
 
-reviews[[3]] |>
-  dplyr::group_by(title) |>
-  dplyr::slice(1)
+reviews |>
+  purrr::list_rbind() |> 
+  dplyr::group_by(title, content) |>
+  dplyr::slice(1) |>
+  dplyr::ungroup()
 
 
 
