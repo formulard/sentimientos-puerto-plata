@@ -22,6 +22,9 @@ destinations_metadata <- read_excel("data/tripadvisors/helpers/places_metadata.x
 
 # Get places from all destinations ----------------------------------------
 
+# NOTE: There commented code because it's not needed to do every thing from the start.
+# If you want to, remove the comments and exclude the cache data
+
 # destinations <- destinations_metadata |>
 #   mutate(
 #     places = map(destination_url, get_places_from_destination, .progress = TRUE)
@@ -43,6 +46,82 @@ destinations <- readRDS("data/tripadvisors/destinations.rds")
 places <- readRDS("data/tripadvisors/places.rds")
 
 places_by_type <- split(places, places$type)
+
+scrape_reviews_for_type <- function(
+    type, 
+    places_by_type, 
+    get_reviews_fn, 
+    cache_path, 
+    output_path,
+    sleep = 5, 
+    n_pages = 4
+) {
+  places <- places_by_type[[type]]
+  
+  if (file.exists(cache_path)) {
+    reviews_list <- readRDS(cache_path)
+  } else {
+    reviews_list <- vector("list", nrow(places)) |>
+      set_names(places$place_id)
+  }
+
+  empty <- which(sapply(reviews_list, is.null))
+  progress <- 1
+  
+  if (length(empty) > 0) {
+    for (index in empty) {
+      tic()
+      progress_pct <- round(progress / length(empty) * 100, 2)
+      
+      place_data <- places[index, ]
+      base_page <- place_data$url
+      
+      current_result <- get_reviews_fn(base_page, sleep = sleep, n_pages = n_pages)
+      
+      log_info("{progress_pct} %: {nrow(current_result)} reviews from {place_data$name}")
+      progress <- progress + 1
+      
+      reviews_list[[index]] <- current_result
+      saveRDS(reviews_list, cache_path)
+      toc()
+    }
+  }
+  
+  reviews_df <- reviews_list |>
+    purrr::list_rbind(names_to = "place_id") |>
+    dplyr::group_by(title, content) |>
+    dplyr::slice(1) |>
+    dplyr::ungroup()
+  
+  places |>
+    dplyr::left_join(reviews_df, by = "place_id") |>
+    saveRDS(here::here(output_path))
+}
+
+
+scrape_reviews_for_type(
+  type = "Attraction",
+  places_by_type = places_by_type,
+  get_reviews_fn = get_attraction_reviews,
+  cache_path = "data/tripadvisors/cache/attraction_reviews.rds",
+  output_path = "data/tripadvisor/reviews/attractions.rds"
+)
+
+scrape_reviews_for_type(
+  type = "Restaurant",
+  places_by_type = places_by_type,
+  get_reviews_fn = get_place_reviews,
+  cache_path = "data/tripadvisor/cache/restaurants_reviews.rds",
+  output_path = "data/tripadvisor/reviews/restaurants.rds"
+)
+
+scrape_reviews_for_type(
+  type = "Hotel",
+  places_by_type = places_by_type,
+  get_reviews_fn = get_place_reviews,
+  cache_path = "data/tripadvisor/cache/hotels_reviews.rds",
+  output_path = "data/tripadvisor/reviews/hotels.rds"
+)
 
 # Get reviews -------------------------------------------------------------
 
@@ -81,84 +160,3 @@ attractions |>
   left_join(attractions_reviews_df) |>
   saveRDS(here::here("data/tripadvisors/reviews/attractions.rds"))
 
-
-# Restaurants ------------------------------------------------------------------
-
-restaurants <- places_by_type[["Restaurant"]]
-
-restaurants_reviews <- vector(length = nrow(restaurants), mode = "list") |>
-  set_names(restaurants$place_id)
-
-empty <- which(sapply(restaurants_reviews, \(x) is.null(x)))
-
-progress <- 1
-
-if (length(empty) > 0) {
-  for (index in empty) {
-    tic()
-    progress_pct <- round(progress / length(empty) * 100, 2)
-    
-    restaurant_data <- restaurants[index, ] 
-    
-    base_page <- restaurant_data$url
-    current_result <- get_place_reviews(base_page, sleep = 5, n_pages = 4)
-    
-    log_info("{progress_pct} %: {nrow(current_result)} reviews from {restaurant_data$name}")
-    progress <- progress + 1
-    
-    restaurants_reviews[[index]] <- current_result
-    saveRDS(restaurants_reviews, "data/tripadvisors/cache/restaurants_reviews.rds")
-    toc()
-  }
-}
-
-restaurants_reviews_df <- restaurants_reviews |>
-  purrr::list_rbind(names_to = "place_id") |> 
-  dplyr::group_by(title, content) |>
-  dplyr::slice(1) |>
-  dplyr::ungroup()
-
-restaurants |>
-  left_join(restaurants_reviews_df) |>
-  saveRDS(here::here("data/tripadvisors/reviews/restaurants.rds"))
-
-
-# Hotels -------------------------------------------------------------------
-
-hotels <- places_by_type[["Hotel"]]
-
-hotels_reviews <- vector(length = nrow(hotels), mode = "list") |>
-  set_names(hotels$place_id)
-
-empty <- which(sapply(hotels_reviews, \(x) is.null(x)))
-
-progress <- 1
-
-if (length(empty) > 0) {
-  for (index in empty) {
-    tic()
-    progress_pct <- round(progress / length(empty) * 100, 2)
-    
-    place_data <- hotels[index, ] 
-    
-    base_page <- place_data$url
-    current_result <- get_place_reviews(base_page, sleep = 5, n_pages = 4)
-    
-    log_info("{progress_pct} %: {nrow(current_result)} reviews from {place_data$name}")
-    progress <- progress + 1
-    
-    hotels_reviews[[index]] <- current_result
-    saveRDS(hotels_reviews, "data/tripadvisors/cache/hotels_reviews.rds")
-    toc()
-  }
-}
-
-hotels_reviews_df <- hotels_reviews |>
-  purrr::list_rbind(names_to = "place_id") |> 
-  dplyr::group_by(title, content) |>
-  dplyr::slice(1) |>
-  dplyr::ungroup()
-
-hotels |>
-  left_join(hotels_reviews_df) |>
-  saveRDS(here::here("data/tripadvisors/reviews/hotels.rds"))
