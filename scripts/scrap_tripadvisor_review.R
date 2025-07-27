@@ -160,3 +160,18 @@ attractions |>
   left_join(attractions_reviews_df) |>
   saveRDS(here::here("data/tripadvisors/reviews/attractions.rds"))
 
+
+# All reviews -------------------------------------------------------------
+
+all_places_reviews <- list.files("data/tripadvisors/reviews/", full.names = TRUE) |>
+  purrr::map(\(file) readRDS(file))
+
+all_places_reviews <- all_places_reviews |>
+  bind_rows() |> 
+  mutate(
+    quarter = lubridate::floor_date(date, "quarter"),
+    month = lubridate::floor_date(date, "month")
+  ) |>
+  relocate(c(month, quarter), .after = date)
+
+saveRDS(all_places_reviews, "data/tripadvisors/reviews/all_places.rds")

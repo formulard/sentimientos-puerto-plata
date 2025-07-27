@@ -158,48 +158,4 @@ get_place_reviews_several_pages <- function(url, sleep = 5, n_pages = 1) {
     purrr::list_rbind()
 }
 
-place_url <- places$url[41]
 
-get_place_reviews_several_pages(place_url, n_pages = 4)
-
-
-get_place_reviews(place_url)
-
-places <- get_places_from_destination(
-  "https://www.tripadvisor.com/Tourism-g317144-Cabarete_Puerto_Plata_Province_Dominican_Republic-Vacations.html") |>
-  dplyr::distinct() |>
-  tibble::rowid_to_column("id") |>
-  dplyr::filter(!is.na(type))
-
-attractions <- places |>
-  dplyr::filter(type == "Attraction")
-
-
-reviews <- vector(length = nrow(attractions), mode = "list") |>
-  purrr::set_names(attractions$id)
-
-empty <- which(sapply(reviews, \(x) is.null(x)))
-
-if (length(empty) > 0) {
-  for (index in empty) {
-
-    base_page <- attractions$url[index]
-    current_result <- get_attraction_reviews_several_pages(base_page, sleep = 5, n_pages = 4)
-
-    print(current_result)
-    
-    reviews[[index]] <- current_result
-  }
-}
-
-reviews_cabarete <- reviews |>
-  purrr::list_rbind(names_to = "id") |> 
-  dplyr::group_by(title, content) |>
-  dplyr::slice(1) |>
-  dplyr::ungroup()
-
-reviews_cabarete <- attractions |>
-  dplyr::mutate(id = as.character(id)) |> 
-  dplyr::left_join(reviews_cabarete)
-
-saveRDS(reviews_cabarete, "data/tripadvisors/reviews/cabarete.rds")
