@@ -1,4 +1,3 @@
-
 get_places_from_destination <- function(page_url) {
   box::use(
     rvest[read_html_live, html_elements, html_element, html_text, html_attr],
