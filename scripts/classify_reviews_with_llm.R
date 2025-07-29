@@ -11,10 +11,10 @@ box::use(
 )
 
 # Import reviews ----------------------------------------------------------
-all_reviews <- readRDS("data/all_reviews/all_reviews.rds") |>
-  as_tibble()
+reviews <- readRDS("data/reviews.rds") |>
+  dplyr::as_tibble()
 
-clasified_reviews <- all_reviews |>
+clasified_reviews <- reviews |>
   select(review_id, text) |>
   classify_reviews_in_batch(batch_size = 15)
 
