@@ -98,3 +98,4 @@ other_places_reviews <- map(other_places_revies_raw, get_place_reviews) |>
 other_places_reviews |>
   distinct() |>
   saveRDS("data/google/reviews_from_other_places.rds")
+
