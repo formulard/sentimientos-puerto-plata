@@ -1,3 +1,5 @@
+## No need to run this if there aren't new reviews
+
 # Dependencies ------------------------------------------------------------
 library(dplyr)
 
@@ -22,13 +24,8 @@ classified_reviews <- reviews |>
     batch_size = 10
   )
 
-
-
 reviews |>
   left_join(classified_reviews) |>
   as_tibble() |>
   filter(!is.na(category)) |>
   saveRDS("data/classified_reviews.rds")
-
-reviews
-
