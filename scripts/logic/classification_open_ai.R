@@ -6,9 +6,11 @@ build_prompt <- function(texts) {
   paste0(
     "For each of the following reviews, classify the sentiment in one of the following categories: ",
     "very negative, negative, neutral, positive, or very positive. ",
-    "Also assign a numeric score from 1 (very negative) to 5 (very positive).",
+    "Also assign a numeric score from 1 (very negative) to 5 (very positive). It can have decimal if inbetween",
+    "Also, add a summary of the review in a few words, max 15 words, as less as possible",
+    "Classify each review, the same number of rows as input",
     "Respond with a pure JSON array (no markdown or code formatting), like this:\n",
-    '[{"category": "positive", "score": 4}, {"category": "neutral", "score": 3}, ...]\n\n',
+    '[{"category": "positive", "score": 4, "summary": "Great beach"}, {"category": "neutral", "score": 3, "summary": "Big city"}, ...]\n\n',
     "Reviews:\n", items
   )
 }
@@ -48,13 +50,14 @@ classify_reviews <- function(
     
     parsed <- jsonlite::fromJSON(content_clean)
 
-    if (!is.data.frame(parsed) || !all(c("category", "score") %in% names(parsed))) {
+    if (!is.data.frame(parsed) || !all(c("category", "score", "summary") %in% names(parsed))) {
       stop("Invalid JSON structure returned.")
     }
 
     Sys.sleep(sleep)
     cbind(reviews[, c("review_id")], parsed)
   }, error = function(e) {
+    print(e)
     return(data.frame())
   })
 }
@@ -75,8 +78,7 @@ classify_reviews_in_batch <- function(
     batch_size = 10,
     openai_key = Sys.getenv("OPENAI_API_KEY"),
     sleep = 1,
-    cache_path = "data/all_reviews/cache/classified_reviews.rds",
-    output_path = "data/all_reviews/classified_reviews.rds",
+    cache_path = NULL,
     max_reviews = Inf
 ) {
 
@@ -103,13 +105,14 @@ classify_reviews_in_batch <- function(
       tictoc::tic()
       current_data <- data_batches[[index]]
       current_result <- classify_reviews(current_data)
+      print(current_result)
       
       result_batches[[index]] <- current_result
       
       if (!is.null(cache_path)) saveRDS(result_batches, cache_path)
       
       batches_done <- batches_done + 1
-      progress_pct <- round(batches_done / length(empty) * 100, 2)
+      progress_pct <- round(batches_done / total_batches * 100, 2)
       
       tictoc::toc(log = TRUE)
       logger::log_info("Iteration {batches_done} out of {total_batches}: {progress_pct} %")
