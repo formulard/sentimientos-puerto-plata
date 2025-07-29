@@ -16,7 +16,7 @@ set_key(api_key)
 places <- readRDS("data/tripadvisors/places.rds") |> as_tibble()
 
 place_info_from_google <- function(query) {
-  raw_result <- google_places(query)
+  raw_result <- google_places(query, page_token = NULL)
   
   if (raw_result$status == "ZERO_RESULTS") return(data.frame())
   
@@ -74,3 +74,27 @@ google_reviews <- map(google_revies_raw, get_place_reviews) |>
   select(google_place_id, date, month, quarter, text, author_name, review_rating = rating)
 
 saveRDS(google_reviews, "data/google/reviews_from_google.rds")
+
+
+# Reviews form other places -----------------------------------------------
+other_places <- readRDS("data/google/other_places_from_google.rds") |>
+  as_tibble()
+
+other_places_revies_raw <- other_places$place_id |>
+  purrr::set_names() |> 
+  purrr::map(googleway::google_place_details, .progress = TRUE)
+
+other_places_reviews <- map(other_places_revies_raw, get_place_reviews) |>
+  list_rbind(names_to = "place_id") |>
+  as_tibble() |>
+  mutate(
+    time = as.numeric(time), 
+    date = as.POSIXct(time, origin = "1970-01-01", tz = "UTC") |> as.Date(),
+    month = floor_date(date, "month"),
+    quarter = floor_date(date, "quarter")
+  ) |>
+  select(place_id, date, month, quarter, text, author_name, rating)
+
+other_places_reviews |>
+  distinct() |>
+  saveRDS("data/google/reviews_from_other_places.rds")

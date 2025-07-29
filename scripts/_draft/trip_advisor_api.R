@@ -1,5 +1,7 @@
 library(httr)
 
+tripadvisor_places <- readRDS("data/tripadvisors/places.rds")
+
 location_df <- function(api_response) {
   address <- api_response$address_obj |> tibble::as_tibble()
   place_name_id <- api_response[c("location_id", "name")] |> tibble::as_tibble()
@@ -26,6 +28,7 @@ get_location <- function(
       accept = "application/json"
     )
   )
+  
   
   parsed <- httr::content(res, as = "parsed", type = "application/json")
   
@@ -85,8 +88,4 @@ get_reviews <- function(
     purrr::list_rbind()
 }
 
-rvs <- get_reviews(locations$location_id[2])
-
-rvs$text
-
-get_location("Cabarete, Puerto Plata")
+get_location(tripadvisor_places$name[100])
