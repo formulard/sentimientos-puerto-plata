@@ -8,7 +8,13 @@ library(forcats)
 library(lubridate)
 
 # Import places and reviews -----------------------------------------------
-places <- readRDS("data/places.rds")
+places <- readRDS("data/places.rds") |> 
+  as_tibble() |>
+  mutate(
+    destination = recode(destination, "Inbert" = "Imbert")
+  )
+
+
 reviews <- readRDS("data/classified_reviews.rds") |>
   as_tibble()
 
@@ -54,6 +60,26 @@ saldo_por_destino <- review_data |>
     destination = fct_reorder(destination, saldo)
   ) |>
   arrange(destination)
+
+saldo_por_destino_anual <- review_data |>
+  mutate(year = year(quarter) |> as.character()) |> 
+  count(year, destination, short_category) |>
+  pivot_wider(names_from = short_category, values_from = n, values_fill = 0) |>
+  mutate(
+    total = positive + negative + neutral,
+    across(where(is.numeric), \(x) x / total * 100),
+    saldo = positive - negative,
+    destination = fct_reorder(destination, saldo)
+  )
+
+
+saldo_por_destino_anual |>
+  filter(year > 2020) |> 
+  ggplot(aes(x= year, y = saldo)) +
+  geom_col() +
+  facet_wrap(~destination)
+
+
 
 
 # Word and tokenizations --------------------------------------------------
@@ -111,7 +137,7 @@ saldos_global |>
   filter(year(quarter) > 2020) |> 
   ggplot(aes(x = quarter, y = saldo)) +
   geom_col() +
-  geom_hline(color = "red", yintercept = 50) +
+#  geom_hline(color = "red", yintercept = 50) +
   labs(
     x = NULL, 
     y = "Saldo de opinión", 
@@ -136,6 +162,12 @@ review_data |>
     types = purrr::map_chr(types, \(x) paste(x, collapse = ", "))
   ) |> 
   writexl::write_xlsx("data/outputs/review_data.xlsx")
+
+places |> 
+  mutate(
+    types = purrr::map_chr(types, \(x) paste(x, collapse = ", "))
+  ) |>
+  writexl::write_xlsx("data/outputs/places_data.xlsx")
 
 list(
   saldos_global = saldos_global,
