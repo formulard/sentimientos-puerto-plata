@@ -10,6 +10,10 @@
   color: white;
 }
 
+.logo {
+  margin: auto;
+}
+
 .header-container {
   max-width: 1200px;
   margin: auto;
@@ -35,4 +39,5 @@ h4, h3 {
 .document-content-container {
   max-width: 1200px;
   margin: auto;
+  padding: 10px;
 }

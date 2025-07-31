@@ -31,12 +31,12 @@ source(here::here("reporte/content.R"))
 
 ::: {.document-header .mb-2}
 ::: {.grid  .header-container}
-::: {.g-col-12 .g-col-md-2}
+::: {.g-col-12 .g-col-md-2 .logo}
 <img class="logo" src="https://bergantin.do/wp-content/themes/punta-bergantin/assets/img/general/logo-punta-bergantin-blanco.svg">
 :::
 ::: {.g-col-12 .g-col-md-10 .text-center .header-text}
 <h1>Percepción del destino Puerto Plata</h1>
-<h4>Enero - Junio 2025</h4>
+<h4>Julio - Septiembre 2025</h4>
 :::
 :::
 :::
