@@ -14,7 +14,6 @@ places <- readRDS("data/places.rds") |>
     destination = recode(destination, "Inbert" = "Imbert")
   )
 
-
 reviews <- readRDS("data/classified_reviews.rds") |>
   as_tibble()
 

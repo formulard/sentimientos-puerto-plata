@@ -1,0 +1,127 @@
+---
+title: Percepción del destino Puerto Plata
+execute:
+  echo: false    
+  warning: false 
+  message: false 
+  error: false
+format: 
+  html:
+    page-layout: custom
+    css:
+      - style.css
+      - stats-cards.css
+    anchor-sections: false
+---
+
+```{r setup}
+library(here)
+
+options(box.path = here())
+
+box::use(
+  . / ui_components[summary_cards, info_header],
+)
+
+source(here::here("reporte/content.R"))
+```
+
+
+<div class="page-layout-custom">
+
+::: {.document-header .mb-2}
+::: {.grid  .header-container}
+::: {.g-col-12 .g-col-md-2}
+<img class="logo" src="https://bergantin.do/wp-content/themes/punta-bergantin/assets/img/general/logo-punta-bergantin-blanco.svg">
+:::
+::: {.g-col-12 .g-col-md-10 .text-center .header-text}
+<h1>Percepción del destino Puerto Plata</h1>
+<h4>Enero - Junio 2025</h4>
+:::
+:::
+:::
+
+
+::: {.document-content-container}
+
+<br> 
+
+```{r info_header}
+info_header("abril-junio 2025", Sys.time())
+```
+
+
+```{r summary_cards}
+
+change_reviews <- review_data |>
+  count(quarter, name = "reviews") |>
+  mutate(
+    lag_reviews = lag(reviews),
+    d_reviews = reviews - lag_reviews
+  ) |>
+  tail(1) |>
+  select(-quarter)
+
+change_saldo <- saldos_global |> 
+  mutate(
+    lag_saldo = lag(saldo),
+    d_saldo   = saldo - lag_saldo
+  ) |> 
+  select(quarter, saldo, lag_saldo, d_saldo) |> 
+  tail(1) |>
+  select(-quarter)
+
+places <- review_data |>
+  count(place_id, quarter) |>
+  count(quarter, name = "places") |> 
+  tail(1) |>
+  select(-quarter)
+
+current_summary <-  bind_cols(change_saldo, change_reviews, places) |>
+  mutate(across(everything(), \(x) round(x, 2)))
+summary_cards(current_summary)
+```
+
+
+::: {.grid}
+::: {.g-col-12 .g-col-md-6}
+```{r plot_indicador_global}
+#| fig-height: 4
+
+plot_indicador_global
+```
+:::
+
+::: {.g-col-12 .g-col-md-6}
+```{r plot_distribucion_respuestas}
+#| fig-height: 4
+
+plot_distribucion_respuestas
+```
+:::
+:::
+
+
+::: {.grid}
+::: {.g-col-12 .g-col-md-6}
+```{r mapa_reviews}
+#| fig-height: 4
+
+mapa_reviews
+```
+:::
+
+::: {.g-col-12 .g-col-md-6}
+```{r plot_valoracion_destino}
+#| fig-height: 4
+
+plot_valoracion_destino
+```
+:::
+:::
+
+
+:::
+
+
+</div>
