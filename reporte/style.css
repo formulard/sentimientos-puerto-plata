@@ -11,6 +11,7 @@
 }
 
 .logo {
+  display: block;
   margin: auto;
 }
 
@@ -27,6 +28,12 @@ h1 {
 
 h4, h3 {
   margin: 0;
+}
+
+.document-content-container h4 {
+  color: #213550;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .header-text {
