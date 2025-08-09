@@ -1,0 +1,30 @@
+
+
+.table-title {
+  font-size: 1.5rem;
+}
+
+.sources-table {
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+  border: 1px solid hsl(213, 33%, 93%);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  background-color: hsl(213, 45%, 97%);
+  border-bottom-color: hsl(213, 33%, 93%);
+  border-bottom-width: 1px;
+  color: hsl(213, 13%, 33%);
+}
+
+.table-header[aria-sort]:hover,
+.table-header[aria-sort]:focus {
+  color: hsl(213, 55%, 50%);
+}
+
+.units {
+  margin-left: 0.15em;
+  color: rgba(0, 0, 0, 0.6);
+}

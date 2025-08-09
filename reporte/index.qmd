@@ -11,6 +11,7 @@ format:
     css:
       - style.css
       - stats-cards.css
+      - tabla.css
     anchor-sections: false
 ---
 
@@ -30,13 +31,18 @@ source(here::here("reporte/content.R"))
 <div class="page-layout-custom">
 
 ::: {.document-header .mb-2}
+
 ::: {.grid  .header-container}
-::: {.g-col-12 .g-col-md-2 .logo}
+::: {.g-col-12 .g-col-md-2}
+
 <img class="logo" src="https://bergantin.do/wp-content/themes/punta-bergantin/assets/img/general/logo-punta-bergantin-blanco.svg">
+
 :::
 ::: {.g-col-12 .g-col-md-10 .text-center .header-text}
+
 <h1>Percepción del destino Puerto Plata</h1>
-<h4>Julio - Septiembre 2025</h4>
+<h4>Enero - Junio 2025</h4>
+
 :::
 :::
 :::
@@ -44,7 +50,6 @@ source(here::here("reporte/content.R"))
 
 ::: {.document-content-container}
 
-<br> 
 
 ```{r info_header}
 info_header("abril-junio 2025", Sys.time())
@@ -84,7 +89,7 @@ summary_cards(current_summary)
 
 
 ::: {.grid}
-::: {.card .g-col-12 .g-col-md-6}
+::: {.g-col-12 .g-col-md-6}
 ```{r plot_indicador_global}
 #| fig-height: 4
 
@@ -92,7 +97,7 @@ plot_indicador_global
 ```
 :::
 
-::: {.card .g-col-12 .g-col-md-6}
+::: {.g-col-12 .g-col-md-6}
 ```{r plot_distribucion_respuestas}
 #| fig-height: 4
 
@@ -103,7 +108,7 @@ plot_distribucion_respuestas
 
 
 ::: {.grid}
-::: {.card .g-col-12 .g-col-md-6}
+::: {.g-col-12 .g-col-md-6}
 ```{r mapa_reviews}
 #| fig-height: 4
 
@@ -111,7 +116,7 @@ mapa_reviews
 ```
 :::
 
-::: {.card .g-col-12 .g-col-md-6}
+::: {.g-col-12 .g-col-md-6}
 ```{r plot_valoracion_destino}
 #| fig-height: 4
 
@@ -121,26 +126,43 @@ plot_valoracion_destino
 :::
 
 
-::: {.grid}
-::: {.card .g-col-12 .g-col-md-6}
-```{r word_cloud}
-#| fig-height: 4
 
-plot_token
+#### Distribución del sentimiento de los comentarios y opiniones, según fuente.
+
+```{r}
+library(reactable)
+library(htmltools)
+
+tabla <- tibble::tibble(
+ img    = c("google.svg", "tripadvisor.svg", "instagram.svg", "twitter.png", "facebook.svg"),
+ source = c("google", "tripadvisor", "instragram", "twitter", "facebook"),
+ h = c("24px", "24px", "24px", "16px", "16px"),
+ positive = sample(seq(0.5, 1, 0.01), 5),
+ neutral  = (1 - positive)  / 2,
+ negative =  1 - neutral - positive,
+ saldo  = (positive - negative) * 100
+)
+
+tabla |> 
+  reactable(
+    columns = list(
+      h = colDef(show = FALSE),
+      source = colDef(show = FALSE),
+      positive = colDef(name = "Positivos", cell = \(x) scales::percent(x, 0.1)),
+      negative = colDef(name = "Negativos", cell = \(x) scales::percent(x, 0.1)),
+      neutral = colDef(name = "Neutrales", cell = \(x) scales::percent(x, 0.1)),
+      saldo = colDef(name = "Saldo de opinión", cell = \(x) scales::comma(x, 0.1)),
+      img = colDef(name = "Fuente", cell = function(value, i) {
+        img(src = sprintf("/assets/%s", value), style = glue::glue("height: {tabla$h[i]};"), alt = value)
+      })
+  ),
+  class = "sources-table",
+  defaultColDef = colDef(headerClass = "table-header"),
+  highlight = TRUE
+)
 ```
-:::
-
-::: {.card .g-col-12 .g-col-md-6}
-```{r bigrams}
-#| fig-height: 4
-
-plot_bigrams
-```
-:::
-:::
-
 
 :::
 
-
+<br>
 </div>

@@ -72,55 +72,6 @@ saldo_destino <- review_data |>
   ) |>
   arrange(destination)
 
-
-# Word Clouds -------------------------------------------------------------
-
-bigrams <- review_data %>%
-  select(destination, text, quarter) |> 
-  unnest_tokens(bigram, text, token = "ngrams", n = 2) |>
-  separate(bigram, into = c("word1", "word2"), sep = " ") |>
-  anti_join(get_stopwords(), c("word1" = "word")) |> 
-  anti_join(get_stopwords(), c("word2" = "word")) |> 
-  mutate(bigram = paste(word1, word2)) |> 
-  drop_na()
-
-tokens <- review_data |>
-  select(destination, text, quarter) |> 
-  unnest_tokens(output = "word", input = "text") |>
-  anti_join(get_stopwords()) 
-
-token_count <- tokens |>
-  count(word, sort = T) |>
-  mutate(word = str_to_title(word))
-
-bigrams_count <- bigrams |>
-  count(bigram, sort = T)
-
-plot_token <- token_count |> 
-  head(100) |> 
-  hchart( "wordcloud", hcaes(name = word, weight = n), name = "Frecuencia") |>
-  hc_title(
-    text = "Palabras de palabras más frecuentes",
-    style = list(
-      color = color_primary,
-      fontWeight = "bold"
-    )
-  )
-
-plot_bigrams <- bigrams_count |> 
-  head(100) |>
-  mutate(n_adjusted = ifelse(n > 400, n - 200, n)) |> 
-  hchart( "wordcloud", hcaes(name = bigram, weight = n_adjusted),  name = "Frecuencia") |>
-  highcharter::hc_tooltip(pointFormat = "{series.name}: {point.n}</b>") |> 
-  hc_title(
-    text = "Combinación de palabras más frecuentes",
-    style = list(
-      color = color_primary,
-      fontWeight = "bold"
-    )
-  )
-
-
 # Mapas -------------------------------------------------------------------
 
 frecuencia_municipio <- review_data |>
@@ -159,6 +110,7 @@ mapa_reviews <- highchart(type = "map") %>%
     name = 'Reviews',
     dataLabels = list(
       enabled = TRUE, 
+      #format = "{point.destination_label}: {point.value_label}",
       formatter = JS("
         function() {
           if (this.point.value !== null && this.point.value !== undefined) {
@@ -197,8 +149,6 @@ plot_indicador_global <- saldos_global |>
   mutate(saldo = round(saldo, 2)) |> 
   hchart("column", hcaes(x = quarter, y = saldo), name = "IPDPP") |> 
   hc_colors(colors = color_accent) |>
-  hc_xAxis(title = list(text = "Trimestre")) %>%
-  hc_yAxis(title = list(text = "Saldo de opinión")) %>%
   hc_title(
     text = "Indicador de percepción del destino",
     style = list(
@@ -212,8 +162,6 @@ plot_valoracion_destino <- saldo_destino |>
   mutate(saldo = round(saldo, 2)) |> 
   hchart("bar", hcaes(x = destination, y = saldo), name = "IPDPP") |> 
   hc_colors(colors = color_accent) |>
-  hc_xAxis(title = list(text = NA)) %>%
-  hc_yAxis(title = list(text = "Saldo de opinión")) %>%
   hc_title(
     text = "Índice de valoración de los destinos",
     style = list(
@@ -254,6 +202,4 @@ plot_distribucion_respuestas <- review_data |>
     align = "center",
     verticalAlign = "top"
   ) |>
-  highcharter::hc_tooltip(pointFormat = "{series.name}: <b>{point.y:.2f} %</b>") |>
-  hc_xAxis(title = list(text = "Trimestre")) %>%
-  hc_yAxis(title = list(text = "Porcentaje"))
+  highcharter::hc_tooltip(pointFormat = "{series.name}: <b>{point.y:.2f} %</b>")
