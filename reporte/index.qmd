@@ -126,6 +126,24 @@ plot_valoracion_destino
 :::
 
 
+::: {.grid}
+::: {.g-col-12 .g-col-md-6}
+```{r word_cloud}
+#| fig-height: 4
+
+plot_token
+```
+:::
+
+::: {.g-col-12 .g-col-md-6}
+```{r bigrams}
+#| fig-height: 4
+
+plot_bigrams
+```
+:::
+:::
+
 
 #### Distribución del sentimiento de los comentarios y opiniones, según fuente.
 
