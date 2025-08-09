@@ -84,7 +84,7 @@ summary_cards(current_summary)
 
 
 ::: {.grid}
-::: {.g-col-12 .g-col-md-6}
+::: {.card .g-col-12 .g-col-md-6}
 ```{r plot_indicador_global}
 #| fig-height: 4
 
@@ -92,7 +92,7 @@ plot_indicador_global
 ```
 :::
 
-::: {.g-col-12 .g-col-md-6}
+::: {.card .g-col-12 .g-col-md-6}
 ```{r plot_distribucion_respuestas}
 #| fig-height: 4
 
@@ -103,7 +103,7 @@ plot_distribucion_respuestas
 
 
 ::: {.grid}
-::: {.g-col-12 .g-col-md-6}
+::: {.card .g-col-12 .g-col-md-6}
 ```{r mapa_reviews}
 #| fig-height: 4
 
@@ -111,11 +111,30 @@ mapa_reviews
 ```
 :::
 
-::: {.g-col-12 .g-col-md-6}
+::: {.card .g-col-12 .g-col-md-6}
 ```{r plot_valoracion_destino}
 #| fig-height: 4
 
 plot_valoracion_destino
+```
+:::
+:::
+
+
+::: {.grid}
+::: {.card .g-col-12 .g-col-md-6}
+```{r word_cloud}
+#| fig-height: 4
+
+plot_token
+```
+:::
+
+::: {.card .g-col-12 .g-col-md-6}
+```{r bigrams}
+#| fig-height: 4
+
+plot_bigrams
 ```
 :::
 :::
