@@ -17,10 +17,13 @@ places <- readRDS("data/places.rds") |>
 reviews <- readRDS("data/classified_reviews.rds") |>
   as_tibble()
 
+sotial_reviews <- readRDS("data/classified_sotial_network_reviews.rds") |>
+  filter(!is.na(date))
+
 # Data wrangling ----------------------------------------------------------
 review_data <- places |>
   left_join(reviews) |>
-  filter(!is.na(category)) |> 
+  filter(!is.na(category)) |>
   mutate(
     short_category = recode(
       category, 
@@ -30,8 +33,29 @@ review_data <- places |>
     )
   )
 
-saldos_global <- review_data |>
+review_data_with_sotial <- review_data |>
+  bind_rows(sotial_reviews) |> 
+  mutate(
+    short_category = recode(
+      category, 
+      "very positive" = "positive",
+      "very negative" = "negative",
+      "mixed" = "neutral"
+    )
+  ) |> 
+  filter(!is.na(short_category))
+
+saldos_global <- review_data_with_sotial  |> 
   count(quarter, short_category) |>
+  pivot_wider(names_from = short_category, values_from = n, values_fill = 0) |>
+  mutate(
+    total = positive + negative + neutral,
+    across(where(is.numeric), \(x) x / total * 100),
+    saldo = positive - negative
+  )
+
+saldo_por_fuente <- review_data_with_sotial  |> 
+  count(source, short_category) |>
   pivot_wider(names_from = short_category, values_from = n, values_fill = 0) |>
   mutate(
     total = positive + negative + neutral,
@@ -77,8 +101,6 @@ saldo_por_destino_anual |>
   ggplot(aes(x= year, y = saldo)) +
   geom_col() +
   facet_wrap(~destination)
-
-
 
 
 # Word and tokenizations --------------------------------------------------
@@ -156,10 +178,15 @@ saldo_por_destino |>
 
 # Save excel outputs ------------------------------------------------------
 
-review_data |>
+review_data <- review_data |>
   mutate(
     types = purrr::map_chr(types, \(x) paste(x, collapse = ", "))
-  ) |> 
+  )
+  
+list(
+  review_data = review_data,
+  sotial_network_reviews = sotial_reviews
+) |> 
   writexl::write_xlsx("data/outputs/review_data.xlsx")
 
 places |> 
@@ -171,7 +198,8 @@ places |>
 list(
   saldos_global = saldos_global,
   saldo_por_destino = saldo_por_destino,
-  saldo_por_destino_serie = saldo_por_destino_serie
+  saldo_por_destino_serie = saldo_por_destino_serie,
+  saldo_por_fuente = saldo_por_fuente
 ) |>
   writexl::write_xlsx("data/outputs/saldos_data.xlsx")
 
@@ -182,3 +210,4 @@ list(
   frecuecnia_bigramas = bigrams_count
 ) |>
   writexl::write_xlsx("data/outputs/frecuencia_palabras_y_bigramas.xlsx")
+
