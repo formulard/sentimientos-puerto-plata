@@ -1,16 +1,16 @@
 
 
-#' Helper to build prompt for a batch of texts
+# Helper to build prompt for a batch of texts
 build_prompt <- function(texts) {
   items <- paste0(seq_along(texts), ". ", texts, collapse = "\n")
   paste0(
-    "For each of the following reviews, classify the sentiment in one of the following categories: ",
-    "very negative, negative, neutral, positive, or very positive. ",
-    "Also assign a numeric score from 1 (very negative) to 5 (very positive). It can have decimal if inbetween",
-    "Also, add a summary of the review in a few words, max 15 words, as less as possible",
-    "Classify each review, the same number of rows as input",
-    "Respond with a pure JSON array (no markdown or code formatting), like this:\n",
-    '[{"category": "positive", "score": 4, "summary": "Great beach"}, {"category": "neutral", "score": 3, "summary": "Big city"}, ...]\n\n',
+    "For each of the following reviews, return EXACTLY one JSON object per review provided. ",
+    "Never split a single review into multiple objects, even if it has multiple sentences or ideas. ",
+    "Classify the sentiment in one of these categories: very negative, negative, neutral, positive, or very positive. ",
+    "Also assign a numeric score from 1 (very negative) to 5 (very positive). Decimals are allowed if in between. ",
+    "Also add a summary of the review in a few words, max 15 words, as short as possible. ",
+    "Respond with a pure JSON array (no markdown, no code formatting, no extra text), like this:\n",
+    '[{"category": "positive", "score": 4, "summary": "Great beach"}, {"category": "neutral", "score": 3, "summary": "Big city"}]\n\n',
     "Reviews:\n", items
   )
 }

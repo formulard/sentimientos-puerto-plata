@@ -2,6 +2,7 @@
 
 # Dependencies ------------------------------------------------------------
 library(dplyr)
+library(purrr)
 
 box::purge_cache()
 
@@ -16,16 +17,25 @@ box::use(
 reviews <- readRDS("data/reviews.rds") |>
   dplyr::as_tibble()
 
-classified_reviews <- reviews |>
+
+existing_reviews <- readRDS("data/classified_reviews.rds")
+
+new_reviews <- anti_join(reviews, existing_reviews) |> 
+  filter(text != "")
+  
+classified_reviews <- new_reviews |>
   select(review_id, text) |>
   filter(text != "") |>
   classify_reviews_in_batch(
     cache_path = "data/cache/reviews_in_progress.rds",
-    batch_size = 10
-  )
+    batch_size = 10, 
+    model = "gpt-4o-mini"
+  ) |> 
+  as_tibble()
 
-reviews |>
+
+new_reviews |> 
   left_join(classified_reviews) |>
-  as_tibble() |>
   filter(!is.na(category)) |>
+  bind_rows(existing_reviews) |>
   saveRDS("data/classified_reviews.rds")
