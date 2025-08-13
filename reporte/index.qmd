@@ -58,7 +58,8 @@ info_header("abril-junio 2025", Sys.time())
 
 ```{r summary_cards}
 
-change_reviews <- review_data |>
+change_reviews <- all_review_data |>
+  filter(!is.na(quarter)) |> 
   count(quarter, name = "reviews") |>
   mutate(
     lag_reviews = lag(reviews),
@@ -84,6 +85,7 @@ places <- review_data |>
 
 current_summary <-  bind_cols(change_saldo, change_reviews, places) |>
   mutate(across(everything(), \(x) round(x, 2)))
+
 summary_cards(current_summary)
 ```
 
