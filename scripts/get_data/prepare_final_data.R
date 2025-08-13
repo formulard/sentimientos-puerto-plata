@@ -4,8 +4,8 @@ library(sf)
 map_puerto_plata <- readRDS("data/municipios_sf.rds") |>
   filter(provincia_label == "Puerto Plata")
 
-tripadvisor_reviews <- readRDS("data/tripadvisors/reviews/all_places.rds")
-tripadvisor_places <- readRDS("data/tripadvisors/places.rds") |> as_tibble() |>
+tripadvisor_reviews <- readRDS("data/tripadvisor/reviews/all_places.rds")
+tripadvisor_places <- readRDS("data/tripadvisor/places.rds") |> as_tibble() |>
   mutate(
     rating = as.numeric(rating),
     destination = recode(

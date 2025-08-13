@@ -54,7 +54,7 @@ scrape_reviews_for_type <- function(
     cache_path, 
     output_path,
     sleep = 5, 
-    n_pages = 4
+    n_pages = 1
 ) {
   places <- places_by_type[[type]]
   
@@ -99,12 +99,14 @@ scrape_reviews_for_type <- function(
 }
 
 
+# Get reviews -------------------------------------------------------------
+
 scrape_reviews_for_type(
   type = "Attraction",
   places_by_type = places_by_type,
   get_reviews_fn = get_attraction_reviews,
   cache_path = "data/tripadvisors/cache/attraction_reviews.rds",
-  output_path = "data/tripadvisor/reviews/attractions.rds"
+  output_path = glue("data/tripadvisor/reviews/{Sys.date())_attractions.rds")
 )
 
 scrape_reviews_for_type(
@@ -112,7 +114,7 @@ scrape_reviews_for_type(
   places_by_type = places_by_type,
   get_reviews_fn = get_place_reviews,
   cache_path = "data/tripadvisor/cache/restaurants_reviews.rds",
-  output_path = "data/tripadvisor/reviews/restaurants.rds"
+  output_path = glue("data/tripadvisor/reviews/{Sys.Date()}_restaurants.rds")
 )
 
 scrape_reviews_for_type(
@@ -120,50 +122,16 @@ scrape_reviews_for_type(
   places_by_type = places_by_type,
   get_reviews_fn = get_place_reviews,
   cache_path = "data/tripadvisor/cache/hotels_reviews.rds",
-  output_path = "data/tripadvisor/reviews/hotels.rds"
+  output_path = glue("data/tripadvisor/reviews/{Sys.date()}_hotels.rds")
 )
-
-# Get reviews -------------------------------------------------------------
-
-attractions <- places_by_type[["Attraction"]]
-
-attractions_reviews <- vector(length = nrow(attractions), mode = "list") |>
-  set_names(attractions$place_id)
-
-empty <- which(sapply(attractions_reviews, \(x) is.null(x)))
-progress <- 1
-
-if (length(empty) > 0) {
-  for (index in empty) {
-    progress_pct <- round(progress / length(empty) * 100, 2)
-
-    attraction_data <- attractions[index, ] 
-    
-    base_page <- attraction_data$url
-    current_result <- get_attraction_reviews(base_page, sleep = 5, n_pages = 4)
-    
-    log_info("{progress_pct} %: {nrow(current_result)} reviews from {attraction_data$name}")
-    progress <- progress + 1
-
-    attractions_reviews[[index]] <- current_result
-    saveRDS(atrractions_reviews, "data/tripadvisor/cache/attraction_reviews.rds")
-  }
-}
-
-attractions_reviews_df <- attractions_reviews |>
-  purrr::list_rbind(names_to = "place_id") |> 
-  dplyr::group_by(title, content) |>
-  dplyr::slice(1) |>
-  dplyr::ungroup()
-
-attractions |>
-  left_join(attractions_reviews_df) |>
-  saveRDS(here::here("data/tripadvisors/reviews/attractions.rds"))
-
 
 # All reviews -------------------------------------------------------------
 
-all_places_reviews <- list.files("data/tripadvisors/reviews/", full.names = TRUE) |>
+all_places_reviews <- list.files(
+  "data/tripadvisor/reviews/", 
+  full.names = TRUE,
+  pattern = "2025"
+) |>
   purrr::map(\(file) readRDS(file))
 
 all_places_reviews <- all_places_reviews |>
@@ -174,4 +142,13 @@ all_places_reviews <- all_places_reviews |>
   ) |>
   relocate(c(month, quarter), .after = date)
 
-saveRDS(all_places_reviews, "data/tripadvisors/reviews/all_places.rds")
+
+if (file.exists("data/tripadvisor/reviews/all_places.rds")) {
+  existing_reviews <- readRDS("data/tripadvisor/reviews/all_places.rds")
+  updated_reviews <- all_places_reviews |>
+    bind_rows(existing_reviews) |>
+    distinct()
+  
+  saveRDS(updated_reviews, "data/tripadvisor/reviews/all_places.rds")
+}
+

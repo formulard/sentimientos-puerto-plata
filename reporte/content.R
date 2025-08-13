@@ -11,6 +11,8 @@ library(forcats)
 library(lubridate)
 library(highcharter)
 library(sf)
+library(reactable)
+library(htmltools)
 
 color_primary <- "#213550"
 color_accent <- "#1e4c4c"
@@ -25,6 +27,8 @@ places <- readRDS(here("data/places.rds")) |>
 
 reviews <- readRDS(here("data/classified_reviews.rds")) |>
   as_tibble()
+
+sotial_reviews <- readRDS(here("data/classified_sotial_network_reviews.rds"))
 
 mapa_pp <- readRDS(here::here("data/municipios_sf.rds")) |>
   filter(provincia_label == "Puerto Plata")
@@ -41,18 +45,29 @@ review_data <- places |>
   left_join(reviews) |>
   filter(!is.na(category)) |> 
   mutate(
-    #quarter = quarter - months(1),
     short_category = recode(
       category, 
       "very positive" = "positive",
       "very negative" = "negative",
       "mixed" = "neutral"
     )
-  ) 
+  )
 
-# filter(quarter(date) <= "2025-06-1")
+all_review_data <- reviews |>
+  bind_rows(sotial_reviews) |>
+  filter(!is.na(category)) |>
+  mutate(
+    short_category = recode(
+      category, 
+      "very positive" = "positive",
+      "very negative" = "negative",
+      "mixed" = "neutral"
+    )
+  )
 
-saldos_global <- review_data |>
+
+
+saldos_global <- all_review_data |>
   count(quarter, short_category) |>
   pivot_wider(names_from = short_category, values_from = n, values_fill = 0) |>
   mutate(
@@ -109,7 +124,7 @@ plot_token <- token_count |>
 
 plot_bigrams <- bigrams_count |> 
   head(100) |>
-  mutate(n_adjusted = ifelse(n > 400, n - 200, n)) |> 
+  mutate(n_adjusted = ifelse(n > 400, n - 300, n)) |> 
   hchart( "wordcloud", hcaes(name = bigram, weight = n_adjusted),  name = "Frecuencia") |>
   highcharter::hc_tooltip(pointFormat = "{series.name}: {point.n}</b>") |> 
   hc_title(
@@ -257,3 +272,48 @@ plot_distribucion_respuestas <- review_data |>
   highcharter::hc_tooltip(pointFormat = "{series.name}: <b>{point.y:.2f} %</b>") |>
   hc_xAxis(title = list(text = "Trimestre")) %>%
   hc_yAxis(title = list(text = "Porcentaje"))
+
+
+
+# Source table ------------------------------------------------------------
+
+saldo_por_fuente <- all_review_data  |> 
+  count(source, short_category) |>
+  filter(!is.na(source)) |> 
+  pivot_wider(names_from = short_category, values_from = n, values_fill = 0) |>
+  mutate(
+    source = str_to_lower(source),
+    total = positive + negative + neutral,
+    across(where(is.numeric), \(x) x / total * 100),
+    saldo = positive - negative
+  )
+
+source_elements <- tibble::tibble(
+  img    = c("google.svg", "tripadvisor.svg", "instagram.svg", "twitter.png", "facebook.svg"),
+  source = c("google", "tripadvisor", "instagram", "twitter", "facebook"),
+  h = c("24px", "24px", "24px", "16px", "16px")
+)
+
+tabla <- saldo_por_fuente |>
+  left_join(source_elements) |>
+  select(-total) |> 
+  arrange(desc(saldo)) |> 
+  relocate(img, positive, neutral, negative, saldo)
+
+source_table <- tabla |> 
+  reactable(
+    columns = list(
+      h = colDef(show = FALSE),
+      source = colDef(show = FALSE),
+      positive = colDef(name = "Positivos", cell = \(x) scales::percent(x / 100, 0.1)),
+      negative = colDef(name = "Negativos", cell = \(x) scales::percent(x / 100, 0.1)),
+      neutral = colDef(name = "Neutrales", cell = \(x) scales::percent(x / 100, 0.1)),
+      saldo = colDef(name = "Saldo de opinión", cell = \(x) scales::comma(x, 0.1)),
+      img = colDef(name = "Fuente", cell = function(value, i) {
+        img(src = sprintf("/assets/%s", value), style = glue::glue("height: {tabla$h[i]};"), alt = value)
+      })
+    ),
+    class = "sources-table",
+    defaultColDef = colDef(headerClass = "table-header"),
+    highlight = TRUE
+  )

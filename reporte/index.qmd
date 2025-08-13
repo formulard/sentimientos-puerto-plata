@@ -58,7 +58,8 @@ info_header("abril-junio 2025", Sys.time())
 
 ```{r summary_cards}
 
-change_reviews <- review_data |>
+change_reviews <- all_review_data |>
+  filter(!is.na(quarter)) |> 
   count(quarter, name = "reviews") |>
   mutate(
     lag_reviews = lag(reviews),
@@ -84,11 +85,12 @@ places <- review_data |>
 
 current_summary <-  bind_cols(change_saldo, change_reviews, places) |>
   mutate(across(everything(), \(x) round(x, 2)))
+
 summary_cards(current_summary)
 ```
 
 
-::: {.grid}
+::: {.grid .mb-2}
 ::: {.g-col-12 .g-col-md-6}
 ```{r plot_indicador_global}
 #| fig-height: 4
@@ -107,7 +109,7 @@ plot_distribucion_respuestas
 :::
 
 
-::: {.grid}
+::: {.grid .mb-2}
 ::: {.g-col-12 .g-col-md-6}
 ```{r mapa_reviews}
 #| fig-height: 4
@@ -126,7 +128,7 @@ plot_valoracion_destino
 :::
 
 
-::: {.grid}
+::: {.grid .mb-3}
 ::: {.g-col-12 .g-col-md-6}
 ```{r word_cloud}
 #| fig-height: 4
@@ -147,37 +149,8 @@ plot_bigrams
 
 #### Distribución del sentimiento de los comentarios y opiniones, según fuente.
 
-```{r}
-library(reactable)
-library(htmltools)
-
-tabla <- tibble::tibble(
- img    = c("google.svg", "tripadvisor.svg", "instagram.svg", "twitter.png", "facebook.svg"),
- source = c("google", "tripadvisor", "instragram", "twitter", "facebook"),
- h = c("24px", "24px", "24px", "16px", "16px"),
- positive = sample(seq(0.5, 1, 0.01), 5),
- neutral  = (1 - positive)  / 2,
- negative =  1 - neutral - positive,
- saldo  = (positive - negative) * 100
-)
-
-tabla |> 
-  reactable(
-    columns = list(
-      h = colDef(show = FALSE),
-      source = colDef(show = FALSE),
-      positive = colDef(name = "Positivos", cell = \(x) scales::percent(x, 0.1)),
-      negative = colDef(name = "Negativos", cell = \(x) scales::percent(x, 0.1)),
-      neutral = colDef(name = "Neutrales", cell = \(x) scales::percent(x, 0.1)),
-      saldo = colDef(name = "Saldo de opinión", cell = \(x) scales::comma(x, 0.1)),
-      img = colDef(name = "Fuente", cell = function(value, i) {
-        img(src = sprintf("/assets/%s", value), style = glue::glue("height: {tabla$h[i]};"), alt = value)
-      })
-  ),
-  class = "sources-table",
-  defaultColDef = colDef(headerClass = "table-header"),
-  highlight = TRUE
-)
+```{r source_table}
+source_table
 ```
 
 :::
